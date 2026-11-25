@@ -25,7 +25,7 @@ It is a screening model calibrated to published tire tests, not measured data fo
 - Braking animation: the selected setup against the factory tire (factory size, new tread, recommended pressure). Click it to pause. The Simple view calls this the "factory tire"; the Technical view calls it the "reference".
 - Tire picture: the size code as printed on a sidewall (for example 225/65R17), what each number means, and the tire drawn to scale from the front, from the side and as a footprint, with the factory size as a dashed outline.
 - Simple view for a poster audience and Technical view with the charts and the model notes.
-- Demo mode: cycles through preset scenarios with a large heading showing the conditions. Run it full screen with the sidebar collapsed: the first screen fits a 13-inch laptop and the comparison charts are one scroll below.
+- Demo mode: cycles through preset scenarios with a large heading showing the conditions, on a dark background. Run it full screen with the sidebar collapsed: the first screen fits a 13-inch laptop and the comparison charts are one scroll below.
 
 ## Run locally
 

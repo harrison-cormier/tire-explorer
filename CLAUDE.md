@@ -74,6 +74,8 @@ and its own GitHub repository.
 
 Demo mode is meant to run full screen on a 13-inch laptop with the sidebar collapsed. Its first screen (banner, three metrics, braking animation, verdict and tire picture) must fit in about 800 px of height, with the comparison charts one scroll below. To keep it that short, demo mode hides the page title, drops the heading inside the animation and caps the tire picture height. Check at 1440 x 800 after changing anything above the divider.
 
+Demo mode is dark; everything else is light. `use_dark_theme()` in `app.py` swaps the module-level colour names for the values in `DARK`, and a demo-only style block recolours Streamlit's own text, tables and header. Never hard-code a colour in a component: use the palette names (`PAGE`, `SURFACE`, `PANEL`, `GRID`, `INK`, `INK_2`, `TIRE`, `TREAD`, `BANNER` and the verdict text colours) so both palettes keep working, and check new UI in both. The sidebar stays light because demo mode runs with it collapsed.
+
 ## Known gaps
 
 - Vehicle classes in `VEHICLES` are generic placeholders. Replace with the real fleet list and factory sizes when available.
