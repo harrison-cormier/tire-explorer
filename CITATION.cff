@@ -17,7 +17,7 @@ authors:
   - family-names: Blinova
     given-names: Varvara
     affiliation: University of Waterloo
-repository-code: "https://github.com/harrison-cormier/tire-fitment-explorer"
+repository-code: "https://github.com/harrison-cormier/tire-explorer"
 license: Apache-2.0
 date-released: "2026-11-18"
 keywords:

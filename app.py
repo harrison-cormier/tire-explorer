@@ -24,7 +24,7 @@ REACTION_S = 1.5
 LIFT_LIMIT_KG = 23
 CAR_LENGTH_M = 4.5
 DEMO_SECONDS = 14
-REPO_URL = "https://github.com/harrison-cormier/tire-fitment-explorer"
+REPO_URL = "https://github.com/harrison-cormier/tire-explorer"
 AUTHORS = "Harrison Cormier, Ashley Pacek and Varvara Blinova"
 FUEL_DOT_STEP = 0.03
 
@@ -54,6 +54,7 @@ SCENARIOS = [
          season="Summer", surface="Dry", temp=28, compound="Summer", dw=20, dr=1, tread=8.0),
 ]
 
+PAGE = "#ffffff"
 INK = "#0b0b0b"
 INK_2 = "#52514e"
 GRID = "#e6e5e1"
@@ -62,6 +63,27 @@ SELECTED = "#2a78d6"
 REFERENCE = "#8a8984"
 WORSE = "#d03b3b"
 LONGER = "#52514e"
+TIRE = "#2b2b2a"
+TREAD = "#77766f"
+PANEL = "#ffffff"
+BANNER = "#eef4fd"
+GOOD_TEXT, NEUTRAL_TEXT, BAD_TEXT = "#0d6b49", "#1d4f8f", "#9c2424"
+
+DARK = dict(
+    PAGE="#0f1115", INK="#f2f2f0", INK_2="#b3b2ad", GRID="#30343c", SURFACE="#181b21",
+    LONGER="#b5b4ae", TIRE="#4b4d52", TREAD="#9a9993", PANEL="#181b21", BANNER="#14233a",
+    GOOD_TEXT="#7fe0b5", NEUTRAL_TEXT="#9cc4f5", BAD_TEXT="#ff9a9a",
+)
+
+
+def use_dark_theme():
+    """
+    Switch the page to the dark palette. Demo mode calls this so the display reads well in a dim
+    room. Every component reads its colours from the module-level names above when it is drawn,
+    and Streamlit re-runs the script from the top on each interaction, so replacing those names
+    here changes one run only and the light palette is back as soon as demo mode is turned off.
+    """
+    globals().update(DARK)
 
 # ----------------------------------------------------------------------------
 # Visual components
@@ -90,6 +112,7 @@ def braking_animation(sel, ref, env, sel_label, ref_label, ref_name, surface_nam
         header=header, conditions=f"{surface_name} at {env['temp']} °C",
     )
     html = """
+<style>html, body {background: __PAGE__;}</style>
 <div id="wrap" style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif">
   <canvas id="c" style="width:100%;height:__HEIGHT__px;border-radius:12px;display:block"></canvas>
 </div>
@@ -183,7 +206,7 @@ function frame(ms) {
 cv.style.cursor = 'pointer'; cv.addEventListener('click', () => { paused = !paused; });
 fit(); window.addEventListener('resize', fit); requestAnimationFrame(frame);
 </script>
-""".replace("__DATA__", json.dumps(data)).replace("__HEIGHT__", str(canvas_height))
+""".replace("__DATA__", json.dumps(data)).replace("__HEIGHT__", str(canvas_height)).replace("__PAGE__", PAGE)
     st.iframe(html, height=canvas_height + 8)
 
 
@@ -213,7 +236,7 @@ def tire_diagram(sel, ref, ref_name):
     s = 150 / max(g["diameter"], 1.12 * f["diameter"])
     ground, front_x, side_x = 318, 72, 256
     ghost = f'fill="none" stroke="{REFERENCE}" stroke-width="1.5" stroke-dasharray="5 4"'
-    halo = 'fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="3"'
+    halo = f'fill="none" stroke="{PANEL}" stroke-opacity="0.55" stroke-width="3"'
     label = f'fill="{INK_2}" font-size="12"'
     value = f'fill="{INK}" font-size="12.5" font-weight="700"'
     measure = f'stroke="{SELECTED}" stroke-width="1.5"'
@@ -225,11 +248,11 @@ def tire_diagram(sel, ref, ref_name):
         if outline:
             return f'<rect {box} {halo}/><rect {box} {ghost}/>'
         grooves = "".join(f'<line x1="{x + w * k:.1f}" y1="{y + 5:.1f}" x2="{x + w * k:.1f}" y2="{ground - 5}" '
-                          f'stroke="#77766f" stroke-width="2"/>' for k in (0.3, 0.5, 0.7))
-        cuts = "".join(f'<line x1="{x + 3:.1f}" y1="{yy:.1f}" x2="{x + w * 0.3 - 3:.1f}" y2="{yy + 3:.1f}" stroke="#77766f"/>'
-                       f'<line x1="{x + w * 0.7 + 3:.1f}" y1="{yy + 3:.1f}" x2="{x + w - 3:.1f}" y2="{yy:.1f}" stroke="#77766f"/>'
+                          f'stroke="{TREAD}" stroke-width="2"/>' for k in (0.3, 0.5, 0.7))
+        cuts = "".join(f'<line x1="{x + 3:.1f}" y1="{yy:.1f}" x2="{x + w * 0.3 - 3:.1f}" y2="{yy + 3:.1f}" stroke="{TREAD}"/>'
+                       f'<line x1="{x + w * 0.7 + 3:.1f}" y1="{yy + 3:.1f}" x2="{x + w - 3:.1f}" y2="{yy:.1f}" stroke="{TREAD}"/>'
                        for yy in np.arange(y + corner, ground - corner, 9))
-        return f'<rect {box} fill="#2b2b2a"/>{grooves}{cuts}'
+        return f'<rect {box} fill="{TIRE}"/>{grooves}{cuts}'
 
     def side(geo, outline):
         r_tire, r_rim = geo["diameter"] / 2 * s, geo["rim"] * 25.4 / 2 * s
@@ -241,8 +264,8 @@ def tire_diagram(sel, ref, ref_name):
         spokes = "".join(f'<line x1="{side_x}" y1="{cy:.1f}" x2="{side_x + 0.9 * r_rim * math.sin(a):.1f}" '
                          f'y2="{cy - 0.9 * r_rim * math.cos(a):.1f}" stroke="#bdbcb7" stroke-width="{r_rim * 0.2:.1f}" '
                          f'stroke-linecap="round"/>' for a in np.arange(5) * 2 * math.pi / 5 + math.pi / 5)
-        return (f'<circle {centre} r="{r_tire:.1f}" fill="#2b2b2a"/>'
-                f'<circle {centre} r="{r_tire - 4:.1f}" fill="none" stroke="#55544f"/>'
+        return (f'<circle {centre} r="{r_tire:.1f}" fill="{TIRE}"/>'
+                f'<circle {centre} r="{r_tire - 4:.1f}" fill="none" stroke="{TREAD}" stroke-opacity="0.5"/>'
                 f'<circle {centre} r="{r_rim:.1f}" fill="#e9e8e4" stroke="#a9a8a3"/>{spokes}'
                 f'<circle {centre} r="{r_rim * 0.2:.1f}" fill="#a9a8a3"/>')
 
@@ -258,7 +281,7 @@ def tire_diagram(sel, ref, ref_name):
         cuts = "".join(f'<line x1="{x + 4:.1f}" y1="{yy:.1f}" x2="{x + w * 0.3 - 4:.1f}" y2="{yy + 3:.1f}" {gap} stroke-width="1.5"/>'
                        f'<line x1="{x + w * 0.7 + 4:.1f}" y1="{yy + 3:.1f}" x2="{x + w - 4:.1f}" y2="{yy:.1f}" {gap} stroke-width="1.5"/>'
                        for yy in np.arange(y + corner * 0.6, y + h - corner * 0.6 - 2, 8))
-        return f'<rect {box} fill="#2b2b2a"/>{grooves}{cuts}'
+        return f'<rect {box} fill="{TIRE}"/>{grooves}{cuts}'
 
     def code_column(x, number, line_1, line_2, change):
         words, changed = change
@@ -302,7 +325,7 @@ def tire_diagram(sel, ref, ref_name):
   <path d="M136 {top:.1f}h8m-4 0v{2 * r_tire:.1f}m-4 0h8" fill="none" {measure}/>
   <text transform="translate(131 {cy:.1f}) rotate(-90)" text-anchor="middle" {value}>{g["diameter"]:.0f} mm tall</text>
   <path d="M{side_x - r_rim:.1f} {cy:.1f}h{2 * r_rim:.1f}" fill="none" {measure}/>
-  <rect x="{side_x - 33}" y="{cy - 27:.1f}" width="66" height="19" rx="9.5" fill="#ffffff" fill-opacity="0.92"/>
+  <rect x="{side_x - 33}" y="{cy - 27:.1f}" width="66" height="19" rx="9.5" fill="{PANEL}" fill-opacity="0.92"/>
   <text x="{side_x}" y="{cy - 13:.1f}" text-anchor="middle" {value}>{g["rim"]}-inch rim</text>
   <path d="M{side_x + r_rim:.1f} {cy - 5:.1f}v10m0 -5h{r_tire - r_rim:.1f}m0 -5v10" fill="none" stroke="#ffffff" stroke-width="1.5"/>
   <text x="{note_x:.1f}" y="{cy - 3:.1f}" {label}>sidewall</text>
@@ -486,12 +509,12 @@ def demo_banner(index, conditions):
     Large heading for demo mode: which scenario is playing and the conditions it sets, readable
     from across a room. It stands in for the page title, which demo mode hides to save height.
     """
-    chip = (f'display:inline-block;background:#ffffff;border:1px solid {GRID};border-radius:999px;'
+    chip = (f'display:inline-block;background:{PANEL};border:1px solid {GRID};border-radius:999px;'
             f'padding:6px 16px;margin:0 8px 6px 0;font-size:1.25rem;font-weight:600;color:{INK}')
     steps = "".join(f'<span style="display:inline-block;width:28px;height:6px;border-radius:3px;margin-right:5px;'
                     f'background:{SELECTED if i == index else GRID}"></span>' for i in range(len(SCENARIOS)))
     st.html(f"""
-<div style="background:#eef4fd;border-left:8px solid {SELECTED};border-radius:12px;padding:14px 24px 8px">
+<div style="background:{BANNER};border-left:8px solid {SELECTED};border-radius:12px;padding:14px 24px 8px">
   <div style="font-size:0.95rem;font-weight:700;letter-spacing:0.08em;color:{SELECTED};margin-bottom:6px">
     TIRE FITMENT EXPLORER &nbsp;|&nbsp; DEMO {index + 1} OF {len(SCENARIOS)} &nbsp; {steps}</div>
   <div style="font-size:2rem;font-weight:700;line-height:1.2;color:{INK};margin-bottom:10px">{SCENARIOS[index]["title"]}</div>
@@ -505,13 +528,19 @@ def verdict(delta_m, residual, ref_name):
     cars = abs(delta_m) / CAR_LENGTH_M
     lengths = "less than one car length" if cars < 0.75 else f"about {cars:.0f} car length{'s' if cars >= 1.5 else ''}"
     if abs(delta_m) < 0.5:
-        st.info(f"On this road the selected setup stops in about the same distance as the {other}.", icon=":material/drag_handle:")
+        colour, mark = NEUTRAL_TEXT, "="
+        text = f"On this road the selected setup stops in about the same distance as the {other}."
     elif delta_m < 0:
-        st.success(f"The selected setup stops {abs(delta_m):.1f} m sooner than the {other}: {lengths}.",
-                   icon=":material/check_circle:")
+        colour, mark = GOOD_TEXT, "&#10003;"
+        text = f"The selected setup stops {abs(delta_m):.1f} m sooner than the {other}: {lengths}."
     else:
-        st.error(f"The selected setup needs {delta_m:.1f} m more to stop than the {other}: {lengths}. "
-                 f"It is still doing {residual:.0f} km/h where the {other} has stopped.", icon=":material/warning:")
+        colour, mark = BAD_TEXT, "!"
+        text = (f"The selected setup needs {delta_m:.1f} m more to stop than the {other}: {lengths}. "
+                f"It is still doing {residual:.0f} km/h where the {other} has stopped.")
+    st.html(f'<div style="background:{colour}22;color:{colour};border-radius:10px;padding:14px 18px;font-size:1rem;'
+            f'line-height:1.5"><span style="display:inline-block;width:1.5em;height:1.5em;line-height:1.4em;'
+            f'text-align:center;border:1.5px solid {colour};border-radius:50%;font-weight:700;margin-right:10px">'
+            f'{mark}</span>{text}</div>')
 
 
 def footer():
@@ -585,13 +614,31 @@ if st.session_state.demo and st.session_state.demo_pending:
     apply_scenario(SCENARIOS[st.session_state.demo_index])
     st.session_state.demo_pending = False
 
-st.markdown("""
+if st.session_state.demo:
+    use_dark_theme()
+
+st.markdown(f"""
 <style>
-.block-container {padding-top: 2.2rem; padding-bottom: 2rem; max-width: 1500px;}
-[data-testid="stMetric"] {background: #fcfcfb; border: 1px solid #e6e5e1; border-radius: 12px; padding: 14px 16px;}
-[data-testid="stMetricValue"] {font-size: 2rem;}
-h1 {font-size: 2rem !important; margin-bottom: 0 !important;}
-[data-testid="stImage"] img {max-height: 430px; object-fit: contain;}
+.block-container {{padding-top: 2.2rem; padding-bottom: 2rem; max-width: 1500px;}}
+[data-testid="stMetric"] {{background: {SURFACE}; border: 1px solid {GRID}; border-radius: 12px; padding: 14px 16px;}}
+[data-testid="stMetricValue"] {{font-size: 2rem;}}
+h1 {{font-size: 2rem !important; margin-bottom: 0 !important;}}
+[data-testid="stImage"] img {{max-height: 430px; object-fit: contain;}}
+</style>
+""", unsafe_allow_html=True)
+if st.session_state.demo:
+    st.markdown(f"""
+<style>
+.stApp, [data-testid="stHeader"] {{background: {PAGE};}}
+[data-testid="stMain"], [data-testid="stMain"] [data-testid="stMarkdownContainer"] :is(p, li, td, th, strong, h1, h2, h3, h4),
+[data-testid="stMain"] [data-testid="stMetricLabel"], [data-testid="stMain"] [data-testid="stMetricValue"] {{color: {INK};}}
+[data-testid="stMain"] [data-testid="stCaptionContainer"] :is(p, li) {{color: {INK_2};}}
+[data-testid="stMain"] a {{color: #7db3f2;}}
+[data-testid="stMain"] :is(table, th, td) {{border-color: {GRID} !important;}}
+[data-testid="stMain"] hr {{border-color: {GRID};}}
+[data-testid="stMain"] [data-testid="stCaptionContainer"] {{opacity: 1;}}
+[data-testid="stMetricDelta"] * {{color: inherit !important;}}
+[data-testid="stHeader"] :is(button, svg), [data-testid="stExpandSidebarButton"] :is(button, svg, span) {{color: {INK} !important; fill: {INK};}}
 </style>
 """, unsafe_allow_html=True)
 
