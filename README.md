@@ -61,7 +61,7 @@ Parts of the code and documentation were written with AI coding assistance (Clau
 
 ## How to cite
 
-> Cormier, H., Pacek, A., and Blinova, V. (2026). *Tire fitment explorer* [Software]. University of Waterloo. https://github.com/harrison-cormier/tire-fitment-explorer
+> Cormier, H., Pacek, A., and Blinova, V. (2026). *Tire fitment explorer* [Software]. University of Waterloo. https://github.com/harrison-cormier/tire-explorer
 
 GitHub's "Cite this repository" button reads the same details from `CITATION.cff`.
 

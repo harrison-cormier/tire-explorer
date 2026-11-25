@@ -24,7 +24,7 @@ REACTION_S = 1.5
 LIFT_LIMIT_KG = 23
 CAR_LENGTH_M = 4.5
 DEMO_SECONDS = 14
-REPO_URL = "https://github.com/harrison-cormier/tire-fitment-explorer"
+REPO_URL = "https://github.com/harrison-cormier/tire-explorer"
 AUTHORS = "Harrison Cormier, Ashley Pacek and Varvara Blinova"
 FUEL_DOT_STEP = 0.03
 
