@@ -5,9 +5,9 @@ Streamlit display that sits beside the poster for the Fleet Tire Optimization St
 ## Layout
 
 - `tire_model.py`: the model. Lookup tables and pure functions, no Streamlit. `evaluate(cfg, env)` returns every output for one tire setup in one condition.
-- `app.py`: the Streamlit page. Sidebar controls, braking animation (HTML canvas in `st.iframe`), tire size picture (SVG drawn to scale, shown with `st.image`), Plotly charts, Simple and Technical views, demo mode.
+- `app.py`: the Streamlit page. Sidebar controls, braking animation (HTML canvas in `st.iframe`), tire size picture (SVG drawn to scale, shown with `st.image`), Plotly charts, Simple and Technical views, demo mode. The Technical tabs run only the open one (`on_change="rerun"` and `if tab.open:`), so a keyed widget inside a tab needs `persist_state="session"` or it loses its value while the tab is closed. Accent colour, padding and heading and metric sizes are set in `.streamlit/config.toml`, not CSS.
 - `tests/test_model.py`: calibration anchors and sanity checks for the model.
-- `tests/test_app.py`: smoke test that the page renders in both views and in demo mode.
+- `tests/test_app.py`: smoke test that the page renders in both views and in demo mode, that each Technical tab opens with the others left empty, that the Road choice survives a tab switch, and that the View and Season controls work.
 - `.streamlit/config.toml`: light theme and minimal toolbar for the hosted version.
 - `SOURCES.md`: every published test and reference behind the model, with links, the judgement values with no published support, and the sources that were removed. `NOTICE` and `CITATION.cff` carry copyright, third-party licences and how to cite.
 
@@ -74,7 +74,7 @@ and its own GitHub repository.
 
 Demo mode is meant to run full screen on a 13-inch laptop with the sidebar collapsed. Its first screen (banner, three metrics, braking animation, verdict and tire picture) must fit in about 800 px of height, with the comparison charts one scroll below. To keep it that short, demo mode hides the page title, drops the heading inside the animation and caps the tire picture height. Check at 1440 x 800 after changing anything above the divider.
 
-Demo mode is dark; everything else is light. `use_dark_theme()` in `app.py` swaps the module-level colour names for the values in `DARK`, and a demo-only style block recolours Streamlit's own text, tables and header. Never hard-code a colour in a component: use the palette names (`PAGE`, `SURFACE`, `PANEL`, `GRID`, `INK`, `INK_2`, `TIRE`, `TREAD`, `BANNER` and the verdict text colours) so both palettes keep working, and check new UI in both. The sidebar stays light because demo mode runs with it collapsed.
+Demo mode is dark; everything else is light. `use_dark_theme()` in `app.py` swaps the module-level colour names for the values in `DARK`, and a demo-only style block recolours Streamlit's own text, tables, metric cards and header. Never hard-code a colour in a component: use the palette names (`PAGE`, `SURFACE`, `PANEL`, `GRID`, `INK`, `INK_2`, `TIRE`, `TREAD`, `BANNER` and the verdict text colours) so both palettes keep working, and check new UI in both. The sidebar stays light because demo mode runs with it collapsed.
 
 ## Known gaps
 

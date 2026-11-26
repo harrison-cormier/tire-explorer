@@ -1,5 +1,14 @@
 [theme]
 base = "light"
+primaryColor = "#2a78d6"
+paddingTop = "2.2rem"
+paddingBottom = "2rem"
+metricValueFontSize = "2rem"
+headingFontSizes = ["2rem"]
+
+[theme.sidebar]
+paddingTop = "1rem"
+paddingBottom = "6rem"
 
 [client]
 toolbarMode = "minimal"
