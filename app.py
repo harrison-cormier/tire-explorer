@@ -209,7 +209,8 @@ cv.style.cursor = 'pointer'; cv.addEventListener('click', () => { paused = !paus
 fit(); window.addEventListener('resize', fit); requestAnimationFrame(frame);
 </script>
 """.replace("__DATA__", json.dumps(data)).replace("__HEIGHT__", str(canvas_height)).replace("__PAGE__", PAGE)
-    st.iframe(html, height=canvas_height + 8)
+    st.iframe(html, height=canvas_height + 8,
+              alt=f"Animation of the selected setup and the {ref_name.lower()} braking side by side")
 
 
 def difference(delta, unit, more, less):
@@ -344,7 +345,7 @@ def tire_diagram(sel, ref, ref_name):
   <text x="134" y="411" {label}>{patch_change.capitalize() + f" than {ref_name.lower()}" if patch_change else f"Same footprint as the {ref_name.lower()}"}</text>
   <text x="134" y="428" {label}>Depends on size, tire type and pressure</text>
 </svg>"""
-    st.image(svg.strip(), width="stretch")
+    st.image(svg.strip(), width="stretch", alt="Selected tire size drawn to scale against the factory size")
 
 
 def style(fig, height=340, title=None):
@@ -361,8 +362,8 @@ def style(fig, height=340, title=None):
     return fig
 
 
-def show(fig):
-    st.plotly_chart(fig, width="stretch", theme=None, config=dict(displayModeBar=False))
+def show(fig, alt):
+    st.plotly_chart(fig, width="stretch", theme=None, config=dict(displayModeBar=False), alt=alt)
 
 
 def sweep_chart(xs, ys, current_x, current_y, x_title, y_range, title, tick_suffix=""):
@@ -609,7 +610,7 @@ def demo_ticker():
 st.set_page_config(page_title="Tire fitment explorer", page_icon=":material/tire_repair:", layout="wide")
 
 defaults = dict(view="Simple", vehicle=list(VEHICLES)[0], season="Winter", compound="Winter", speed=80, tread=8.0,
-                adjusted=True, ref_compound="All-season", demo=False, demo_index=0, demo_pending=False, demo_last=0.0)
+                adjusted=True, ref_compound="All-season", road="dry", demo=False, demo_index=0, demo_pending=False, demo_last=0.0)
 for key, value in defaults.items():
     st.session_state.setdefault(key, value)
 if "width" not in st.session_state:
@@ -623,13 +624,11 @@ if st.session_state.demo and st.session_state.demo_pending:
 if st.session_state.demo:
     use_dark_theme()
 
-st.markdown(f"""
+st.markdown("""
 <style>
-.block-container {{padding-top: 2.2rem; padding-bottom: 2rem; max-width: 1500px;}}
-[data-testid="stMetric"] {{background: {SURFACE}; border: 1px solid {GRID}; border-radius: 12px; padding: 14px 16px;}}
-[data-testid="stMetricValue"] {{font-size: 2rem;}}
-h1 {{font-size: 2rem !important; margin-bottom: 0 !important;}}
-[data-testid="stImage"] img {{max-height: 430px; object-fit: contain;}}
+.block-container {max-width: 1500px;}
+h1 {margin-bottom: 0 !important;}
+[data-testid="stImage"] img {max-height: 430px; object-fit: contain;}
 </style>
 """, unsafe_allow_html=True)
 if st.session_state.demo:
@@ -644,6 +643,7 @@ if st.session_state.demo:
 [data-testid="stMain"] hr {{border-color: {GRID};}}
 [data-testid="stMain"] [data-testid="stCaptionContainer"] {{opacity: 1;}}
 [data-testid="stMetricDelta"] * {{color: inherit !important;}}
+[data-testid="stMain"] [data-testid="stMetric"] {{background: {SURFACE}; border-color: {GRID};}}
 [data-testid="stHeader"] :is(button, svg), [data-testid="stExpandSidebarButton"] :is(button, svg, span) {{color: {INK} !important; fill: {INK};}}
 </style>
 """, unsafe_allow_html=True)
@@ -657,11 +657,11 @@ oem_w, oem_a, oem_r = veh["oem"]
 oem_geo = geometry(oem_w, oem_a, oem_r)
 
 with st.sidebar:
-    st.radio("View", ["Simple", "Technical"], key="view", horizontal=True)
+    st.segmented_control("View", ["Simple", "Technical"], key="view", required=True)
     technical = st.session_state.view != "Simple"
     ref_name = "Reference" if technical else "Factory tire"
     st.header("Conditions")
-    st.radio("Season", list(SEASONS), key="season", horizontal=True, on_change=reset_season)
+    st.segmented_control("Season", list(SEASONS), key="season", required=True, on_change=reset_season)
     season = SEASONS[st.session_state.season]
     if st.session_state.surface not in season["surfaces"]:
         reset_season()
@@ -739,20 +739,20 @@ delta_m = sel["distance"] - ref["distance"]
 residual = speed_at_distance(sel["profile"], ref["distance"])
 vs = f"vs {ref_name.lower()}"
 k1, k2, k3, k4, k5 = st.columns(5) if technical else st.columns(3) + [None, None]
-k1.metric("Braking distance", f"{sel['distance']:.1f} m", f"{round(delta_m, 1) + 0:+.1f} m {vs}", delta_color="inverse")
+k1.metric("Braking distance", f"{sel['distance']:.1f} m", f"{round(delta_m, 1) + 0:+.1f} m {vs}", delta_color="inverse", border=True)
 k2.metric("Speed at reference stop" if technical else "Speed where the factory tire has stopped", f"{residual:.0f} km/h",
           "Already stopped" if delta_m <= 0 else "Still moving", delta_color="normal" if delta_m <= 0 else "inverse",
-          delta_arrow="off")
+          delta_arrow="off", border=True)
 if not technical:
-    k3.metric("Grip limit on a highway ramp", f"{sel['corner']:.0f} km/h", f"{sel['corner'] - ref['corner']:+.0f} km/h {vs}")
+    k3.metric("Grip limit on a highway ramp", f"{sel['corner']:.0f} km/h", f"{sel['corner'] - ref['corner']:+.0f} km/h {vs}", border=True)
 else:
     if sel["v_hp"]:
-        k3.metric("Hydroplaning starts near", f"{sel['v_hp']:.0f} km/h", f"{sel['v_hp'] - ref['v_hp']:+.0f} km/h vs reference")
+        k3.metric("Hydroplaning starts near", f"{sel['v_hp']:.0f} km/h", f"{sel['v_hp'] - ref['v_hp']:+.0f} km/h vs reference", border=True)
     else:
-        k3.metric("Peak grip", f"{sel['mu']:.2f}", f"{100 * (sel['mu'] / ref['mu'] - 1):+.0f}% vs reference")
-    k4.metric(f"Cornering limit, {RAMP_RADIUS_M} m ramp", f"{sel['corner']:.0f} km/h", f"{sel['corner'] - ref['corner']:+.0f} km/h vs reference")
+        k3.metric("Peak grip", f"{sel['mu']:.2f}", f"{100 * (sel['mu'] / ref['mu'] - 1):+.0f}% vs reference", border=True)
+    k4.metric(f"Cornering limit, {RAMP_RADIUS_M} m ramp", f"{sel['corner']:.0f} km/h", f"{sel['corner'] - ref['corner']:+.0f} km/h vs reference", border=True)
     k5.metric("Grip lost if wheels lock", f"{100 * (1 - sel['locked_mu'] / sel['mu']):.0f}%",
-              f"Peak at {sel['peak_slip']:.0f}% slip", delta_color="off")
+              f"Peak at {sel['peak_slip']:.0f}% slip", delta_color="off", border=True)
 
 braking_note = (f"Braking distance only. Add {ss.speed / 3.6 * REACTION_S:.0f} m travelled during a {REACTION_S} s driver "
                 f"reaction at {ss.speed} km/h. Modelled values for comparison, not a measurement of any specific tire.")
@@ -773,7 +773,7 @@ if ss.demo:
 if not technical:
     c1, c2 = st.columns([1.2, 1])
     with c1:
-        show(car_length_chart(sel, ref, ss.speed, ref_name))
+        show(car_length_chart(sel, ref, ss.speed, ref_name), f"Stopping distance of the selected setup and the {ref_name.lower()}")
     with c2:
         ratings = [("Stopping", ref["distance"] / sel["distance"]), ("Cornering grip", sel["corner"] / ref["corner"])]
         if sel["v_hp"]:
@@ -788,68 +788,75 @@ if not technical:
     st.stop()
 
 tabs = st.tabs(["Braking physics", "Width vs diameter vs everything else", "Winter vs summer", "Slip and stability",
-                "Health and safety", "Four pillars", "Model and sources"])
+                "Health and safety", "Four pillars", "Model and sources"], key="tech_tab", on_change="rerun")
 
-with tabs[0]:
-    c1, c2 = st.columns([1.5, 1])
-    with c1:
-        show(braking_trace_chart(sel, ref, ss.speed))
-    with c2:
-        show(grip_envelope_chart(sel, ref))
-    st.caption(f"Peak friction {sel['mu']:.2f} selected, {ref['mu']:.2f} reference. Mean deceleration "
-               f"{(ss.speed / 3.6) ** 2 / (2 * sel['distance']) / G:.2f} g selected, {(ss.speed / 3.6) ** 2 / (2 * ref['distance']) / G:.2f} g reference. "
-               "On water and slush the trace bends because grip recovers as speed falls below the hydroplaning onset.")
+if tabs[0].open:
+    with tabs[0]:
+        c1, c2 = st.columns([1.5, 1])
+        with c1:
+            show(braking_trace_chart(sel, ref, ss.speed), "Speed against distance under full braking, selected setup and reference")
+        with c2:
+            show(grip_envelope_chart(sel, ref), "Grip envelope for braking and cornering, selected setup and reference")
+        st.caption(f"Peak friction {sel['mu']:.2f} selected, {ref['mu']:.2f} reference. Mean deceleration "
+                   f"{(ss.speed / 3.6) ** 2 / (2 * sel['distance']) / G:.2f} g selected, {(ss.speed / 3.6) ** 2 / (2 * ref['distance']) / G:.2f} g reference. "
+                   "On water and slush the trace bends because grip recovers as speed falls below the hydroplaning onset.")
 
-with tabs[1]:
-    def with_size(width=None, rim=None, aspect=None, **extra):
-        width, rim = width or ss.width, rim or ss.rim
-        aspect = aspect or exact_aspect(width, rim, sel["geo"]["diameter"])
-        return evaluate({**cfg, "width": width, "rim": rim, "aspect": aspect, **extra}, env)["distance"]
+if tabs[1].open:
+    with tabs[1]:
+        def with_size(width=None, rim=None, aspect=None, **extra):
+            width, rim = width or ss.width, rim or ss.rim
+            aspect = aspect or exact_aspect(width, rim, sel["geo"]["diameter"])
+            return evaluate({**cfg, "width": width, "rim": rim, "aspect": aspect, **extra}, env)["distance"]
 
-    width_ys = [with_size(width=w) for w in widths]
-    rim_ys = [with_size(rim=r) for r in rims]
-    low, high = min(width_ys + rim_ys), max(width_ys + rim_ys)
-    pad = max(0.15 * sel["distance"] - (high - low) / 2, 0.08 * (high - low))
-    y_range = [low - pad, high + pad]
-    c1, c2 = st.columns(2)
-    with c1:
-        show(sweep_chart(widths, width_ys, ss.width, sel["distance"], "Section width (mm)", y_range,
-                         "Changing width only (same overall diameter)"))
-    with c2:
-        show(sweep_chart(rims, rim_ys, ss.rim, sel["distance"], "Rim diameter (inches)", y_range,
-                         "Changing rim only (same width and overall diameter)", '"'))
-    st.caption("Both charts share one vertical scale, so a flat line means that change barely matters on this surface. "
-               "Overall diameter is held exactly, so some points fall between the aspect ratios that are actually sold.")
+        width_ys = [with_size(width=w) for w in widths]
+        rim_ys = [with_size(rim=r) for r in rims]
+        low, high = min(width_ys + rim_ys), max(width_ys + rim_ys)
+        pad = max(0.15 * sel["distance"] - (high - low) / 2, 0.08 * (high - low))
+        y_range = [low - pad, high + pad]
+        c1, c2 = st.columns(2)
+        with c1:
+            show(sweep_chart(widths, width_ys, ss.width, sel["distance"], "Section width (mm)", y_range,
+                             "Changing width only (same overall diameter)"),
+                 "Braking distance as section width changes")
+        with c2:
+            show(sweep_chart(rims, rim_ys, ss.rim, sel["distance"], "Rim diameter (inches)", y_range,
+                             "Changing rim only (same width and overall diameter)", '"'),
+                 "Braking distance as rim diameter changes")
+        st.caption("Both charts share one vertical scale, so a flat line means that change barely matters on this surface. "
+                   "Overall diameter is held exactly, so some points fall between the aspect ratios that are actually sold.")
 
-    changes = [
-        ("20 mm wider", with_size(width=ss.width + 20)),
-        ("20 mm narrower", with_size(width=ss.width - 20)),
-        ("Rim 1 inch larger, shorter sidewall", with_size(rim=ss.rim + 1)),
-        ("Rim 1 inch smaller, taller sidewall", with_size(rim=ss.rim - 1)),
-        ("Taller tire overall (+5 aspect ratio)", with_size(aspect=ss.aspect + 5)),
-        ("Tread worn to 4 mm", with_size(aspect=ss.aspect, tread=4.0)),
-        ("Tread worn to 2 mm", with_size(aspect=ss.aspect, tread=2.0)),
-        ("Pressure 6 psi low", with_size(aspect=ss.aspect, pressure=running_psi - 6)),
-    ] + [(f"Switch to {c.split(' ')[0].lower()} tires", with_size(aspect=ss.aspect, compound=c))
-         for c in COMPOUNDS if c != ss.compound]
-    show(tornado_chart([(name, 100 * (d / sel["distance"] - 1)) for name, d in changes]))
+        changes = [
+            ("20 mm wider", with_size(width=ss.width + 20)),
+            ("20 mm narrower", with_size(width=ss.width - 20)),
+            ("Rim 1 inch larger, shorter sidewall", with_size(rim=ss.rim + 1)),
+            ("Rim 1 inch smaller, taller sidewall", with_size(rim=ss.rim - 1)),
+            ("Taller tire overall (+5 aspect ratio)", with_size(aspect=ss.aspect + 5)),
+            ("Tread worn to 4 mm", with_size(aspect=ss.aspect, tread=4.0)),
+            ("Tread worn to 2 mm", with_size(aspect=ss.aspect, tread=2.0)),
+            ("Pressure 6 psi low", with_size(aspect=ss.aspect, pressure=running_psi - 6)),
+        ] + [(f"Switch to {c.split(' ')[0].lower()} tires", with_size(aspect=ss.aspect, compound=c))
+             for c in COMPOUNDS if c != ss.compound]
+        show(tornado_chart([(name, 100 * (d / sel["distance"] - 1)) for name, d in changes]),
+             "Change in braking distance from one change at a time")
 
-with tabs[2]:
-    road = st.radio("Road", ["dry", "wet"], horizontal=True, label_visibility="collapsed",
-                    format_func=lambda r: f"{r.capitalize()} road")
-    show(temperature_chart(cfg, env, road, ss.temp))
-    st.caption("Liquid water below 0 °C assumes a salted road, so the wet chart stops at −15 °C. The 7 °C line is the common changeover guidance; "
-               "in this model the wet-road crossover sits near it, while on dry pavement summer and all-season "
-               "compounds keep an edge to well below freezing.")
-    st.markdown(f"**Braking distance from {ss.speed} km/h for the selected size, by tire type and condition**")
-    show(matrix_chart(cfg, env))
+if tabs[2].open:
+    with tabs[2]:
+        road = st.segmented_control("Road", ["dry", "wet"], key="road", required=True, persist_state="session",
+                                    label_visibility="collapsed", format_func=lambda r: f"{r.capitalize()} road")
+        show(temperature_chart(cfg, env, road, ss.temp), "Braking distance against air temperature for each tire type")
+        st.caption("Liquid water below 0 °C assumes a salted road, so the wet chart stops at −15 °C. The 7 °C line is the common changeover guidance; "
+                   "in this model the wet-road crossover sits near it, while on dry pavement summer and all-season "
+                   "compounds keep an edge to well below freezing.")
+        st.markdown(f"**Braking distance from {ss.speed} km/h for the selected size, by tire type and condition**")
+        show(matrix_chart(cfg, env), "Braking distance for each tire type on each road condition")
 
-with tabs[3]:
-    c1, c2 = st.columns([1.6, 1])
-    with c1:
-        show(slip_chart(sel, ref, ss.surface))
-    with c2:
-        st.markdown(f"""
+if tabs[3].open:
+    with tabs[3]:
+        c1, c2 = st.columns([1.6, 1])
+        with c1:
+            show(slip_chart(sel, ref, ss.surface), "Grip against wheel slip, selected setup and reference")
+        with c2:
+            st.markdown(f"""
 **Reading the curve**
 
 A tire grips hardest when it slips a little: about **{sel['peak_slip']:.0f}%** on this surface. ABS and traction
@@ -859,94 +866,97 @@ control work to hold the wheel near that peak. Past it the wheel locks or spins 
 On ice and packed snow the peak arrives at very low slip, so a small amount of extra throttle or brake
 pushes the tire over the top. That is why slides start so easily in winter.
 """)
-        m1, m2 = st.columns(2)
-        m1.metric("Steepest hill start", f"{sel['grade']:.0f}% grade", f"{sel['grade'] - ref['grade']:+.0f} pts vs reference")
-        m2.metric("Steering response index", f"{100 * sel['response']:.0f}",
-                  f"{100 * (sel['response'] - ref['response']):+.0f} vs reference")
-        st.caption(f"Hill start assumes {veh['drive']} with {100 * veh['driven']:.0f}% of weight on the driven wheels. "
-                   "Steering response rises with a shorter sidewall, more width and a firmer compound.")
+            m1, m2 = st.columns(2)
+            m1.metric("Steepest hill start", f"{sel['grade']:.0f}% grade", f"{sel['grade'] - ref['grade']:+.0f} pts vs reference", border=True)
+            m2.metric("Steering response index", f"{100 * sel['response']:.0f}",
+                      f"{100 * (sel['response'] - ref['response']):+.0f} vs reference", border=True)
+            st.caption(f"Hill start assumes {veh['drive']} with {100 * veh['driven']:.0f}% of weight on the driven wheels. "
+                       "Steering response rises with a shorter sidewall, more width and a firmer compound.")
 
-with tabs[4]:
-    def status(level):
-        return {0: "🟢&nbsp;OK", 1: "🟡&nbsp;Caution", 2: "🔴&nbsp;High&nbsp;risk"}[level]
+if tabs[4].open:
+    with tabs[4]:
+        def status(level):
+            return {0: ":green-badge[OK]", 1: ":orange-badge[Caution]", 2: ":red-badge[High risk]"}[level]
 
-    rows = []
-    rows.append(("Stopping distance", f"{sel['distance']:.1f} m ({delta_m:+.1f} m vs reference)",
-                 status(0 if delta_m <= 0.5 else 1 if delta_m / ref["distance"] < 0.15 else 2),
-                 "Rear-end and intersection collisions."))
-    rows.append(("Speed where the reference has stopped", f"{residual:.0f} km/h",
-                 status(0 if residual < 1 else 1 if residual < 30 else 2),
-                 "Impact severity: injury risk climbs steeply with impact speed."))
-    if sel["v_hp"]:
-        margin = sel["v_hp"] - ss.speed
-        rows.append(("Hydroplaning margin", f"{margin:+.0f} km/h at {ss.speed} km/h",
-                     status(0 if margin > 20 else 1 if margin > 0 else 2),
-                     "Total loss of steering and braking on water or slush. Wider and worn tires lose margin first."))
-    rows.append(("Skid threshold", f"Peak grip at {sel['peak_slip']:.0f}% slip, {sel['mu']:.2f} friction",
-                 status(0 if sel["mu"] > 0.5 else 1 if sel["mu"] > 0.2 else 2),
-                 "Low grip with an early peak means little warning before a slide."))
-    rows.append((f"Cornering limit on a {RAMP_RADIUS_M} m ramp", f"{sel['corner']:.0f} km/h",
-                 status(0 if sel["corner"] >= 50 else 1 if sel["corner"] >= 35 else 2),
-                 "Run-off-road and loss-of-control crashes."))
-    temp_level = (1 if (ss.compound == "Summer" and ss.temp < 7) or (ss.compound == "Winter" and ss.temp > 15) else 0)
-    temp_level = 2 if ss.compound == "Summer" and ss.temp < -7 else temp_level
-    rows.append(("Compound in its temperature range", f"{ss.compound} at {ss.temp} °C", status(temp_level),
-                 "Summer compounds harden in the cold; winter compounds go soft and wear fast in heat."))
-    rows.append(("Tread depth", f"{ss.tread:.1f} mm", status(0 if ss.tread >= 4 else 1 if ss.tread >= 3 else 2),
-                 "Wet and snow grip fall away quickly below about 4 mm."))
-    drift = pressure_at_temperature(ss.pressure, ss.temp)
-    off_placard = 100 * abs(running_psi / veh["placard"] - 1)
-    rows.append(("Running pressure", f"{running_psi:.0f} psi (placard {veh['placard']} psi). "
-                 f"Set at 20 °C and left alone it would read {drift:.0f} psi at {ss.temp} °C",
-                 status(0 if off_placard < 10 else 1 if off_placard < 20 else 2),
-                 "Under-inflation lowers hydroplaning speed, dulls steering and overheats the tire. "
-                 "Over-inflation shrinks the footprint and hardens the ride."))
-    rows.append(("Speedometer error", f"{sel['speedo']:+.1f}% true speed vs indicated",
-                 status(0 if abs(sel["speedo"]) <= 3 else 1),
-                 "A taller tire makes the vehicle faster than the dial shows."))
-    rows.append(("Pothole and curb damage risk index", f"{sel['impact_risk']:.0f} (reference 100)",
-                 status(0 if sel["impact_risk"] <= 120 else 1 if sel["impact_risk"] <= 160 else 2),
-                 "Short sidewalls protect the rim less: blowouts and roadside stops."))
-    rows.append(("Ride harshness index", f"{sel['harshness']:.0f} (reference 100)",
-                 status(0 if sel["harshness"] <= 115 else 1),
-                 "Whole-body vibration and fatigue over long driving days."))
-    rows.append(("Wheel and tire weight", f"About {sel['assembly_kg']:.0f} kg each",
-                 status(0 if sel["assembly_kg"] <= LIFT_LIMIT_KG else 1),
-                 f"Manual handling at seasonal changeovers. {LIFT_LIMIT_KG} kg is the NIOSH lifting reference load."))
+        rows = []
+        rows.append(("Stopping distance", f"{sel['distance']:.1f} m ({delta_m:+.1f} m vs reference)",
+                     status(0 if delta_m <= 0.5 else 1 if delta_m / ref["distance"] < 0.15 else 2),
+                     "Rear-end and intersection collisions."))
+        rows.append(("Speed where the reference has stopped", f"{residual:.0f} km/h",
+                     status(0 if residual < 1 else 1 if residual < 30 else 2),
+                     "Impact severity: injury risk climbs steeply with impact speed."))
+        if sel["v_hp"]:
+            margin = sel["v_hp"] - ss.speed
+            rows.append(("Hydroplaning margin", f"{margin:+.0f} km/h at {ss.speed} km/h",
+                         status(0 if margin > 20 else 1 if margin > 0 else 2),
+                         "Total loss of steering and braking on water or slush. Wider and worn tires lose margin first."))
+        rows.append(("Skid threshold", f"Peak grip at {sel['peak_slip']:.0f}% slip, {sel['mu']:.2f} friction",
+                     status(0 if sel["mu"] > 0.5 else 1 if sel["mu"] > 0.2 else 2),
+                     "Low grip with an early peak means little warning before a slide."))
+        rows.append((f"Cornering limit on a {RAMP_RADIUS_M} m ramp", f"{sel['corner']:.0f} km/h",
+                     status(0 if sel["corner"] >= 50 else 1 if sel["corner"] >= 35 else 2),
+                     "Run-off-road and loss-of-control crashes."))
+        temp_level = (1 if (ss.compound == "Summer" and ss.temp < 7) or (ss.compound == "Winter" and ss.temp > 15) else 0)
+        temp_level = 2 if ss.compound == "Summer" and ss.temp < -7 else temp_level
+        rows.append(("Compound in its temperature range", f"{ss.compound} at {ss.temp} °C", status(temp_level),
+                     "Summer compounds harden in the cold; winter compounds go soft and wear fast in heat."))
+        rows.append(("Tread depth", f"{ss.tread:.1f} mm", status(0 if ss.tread >= 4 else 1 if ss.tread >= 3 else 2),
+                     "Wet and snow grip fall away quickly below about 4 mm."))
+        drift = pressure_at_temperature(ss.pressure, ss.temp)
+        off_placard = 100 * abs(running_psi / veh["placard"] - 1)
+        rows.append(("Running pressure", f"{running_psi:.0f} psi (placard {veh['placard']} psi). "
+                     f"Set at 20 °C and left alone it would read {drift:.0f} psi at {ss.temp} °C",
+                     status(0 if off_placard < 10 else 1 if off_placard < 20 else 2),
+                     "Under-inflation lowers hydroplaning speed, dulls steering and overheats the tire. "
+                     "Over-inflation shrinks the footprint and hardens the ride."))
+        rows.append(("Speedometer error", f"{sel['speedo']:+.1f}% true speed vs indicated",
+                     status(0 if abs(sel["speedo"]) <= 3 else 1),
+                     "A taller tire makes the vehicle faster than the dial shows."))
+        rows.append(("Pothole and curb damage risk index", f"{sel['impact_risk']:.0f} (reference 100)",
+                     status(0 if sel["impact_risk"] <= 120 else 1 if sel["impact_risk"] <= 160 else 2),
+                     "Short sidewalls protect the rim less: blowouts and roadside stops."))
+        rows.append(("Ride harshness index", f"{sel['harshness']:.0f} (reference 100)",
+                     status(0 if sel["harshness"] <= 115 else 1),
+                     "Whole-body vibration and fatigue over long driving days."))
+        rows.append(("Wheel and tire weight", f"About {sel['assembly_kg']:.0f} kg each",
+                     status(0 if sel["assembly_kg"] <= LIFT_LIMIT_KG else 1),
+                     f"Manual handling at seasonal changeovers. {LIFT_LIMIT_KG} kg is the NIOSH lifting reference load."))
 
-    table = "| Hazard indicator | This setup | Status | Why it matters |\n|---|---|---|---|\n"
-    table += "\n".join(f"| {a} | {b} | {c} | {d} |" for a, b, c, d in rows)
-    st.markdown(table)
-    st.caption("Indices are relative to the factory size at 100. Status bands are screening thresholds for discussion, not compliance limits. "
-               "The grip and cornering bands are absolute, so snow and ice can show high risk on every tire; "
-               "the comparison with the reference is in the first two rows.")
+        table = "| Hazard indicator | This setup | Status | Why it matters |\n|---|---|---|---|\n"
+        table += "\n".join(f"| {a} | {b} | {c} | {d} |" for a, b, c, d in rows)
+        st.markdown(table)
+        st.caption("Indices are relative to the factory size at 100. Status bands are screening thresholds for discussion, not compliance limits. "
+                   "The grip and cornering bands are absolute, so snow and ice can show high risk on every tire; "
+                   "the comparison with the reference is in the first two rows.")
 
-with tabs[5]:
-    km = 25000
-    litres = veh["fuel"] * km / 100
-    co2 = (sel["fuel_delta"] - ref["fuel_delta"]) / 100 * litres * 2.3
+if tabs[5].open:
+    with tabs[5]:
+        km = 25000
+        litres = veh["fuel"] * km / 100
+        co2 = (sel["fuel_delta"] - ref["fuel_delta"]) / 100 * litres * 2.3
 
-    def cell(value, reference, unit="", fmt=".0f"):
-        return f"{value:{fmt}}{unit} (reference {reference:{fmt}}{unit})"
+        def cell(value, reference, unit="", fmt=".0f"):
+            return f"{value:{fmt}}{unit} (reference {reference:{fmt}}{unit})"
 
-    pillars = [
-        ("**Cost** (primary)", "Tire purchase price index", cell(sel["price"], ref["price"])),
-        ("", "Fuel use from rolling resistance", f"{sel['fuel_delta'] - ref['fuel_delta']:+.1f}% vs reference"),
-        ("**Health and safety** (primary)", "Braking distance", cell(sel["distance"], ref["distance"], " m", ".1f")),
-        ("", "Cornering limit", cell(sel["corner"], ref["corner"], " km/h")),
-        ("", "Hydroplaning onset", cell(sel["v_hp"], ref["v_hp"], " km/h") if sel["v_hp"] else "No water film on this surface"),
-        ("**Operational efficiency** (secondary)", "Tread wear rate index", cell(100 * sel["wear"], 100 * ref["wear"])),
-        ("", "Wheel and tire weight at changeover", cell(sel["assembly_kg"], ref["assembly_kg"], " kg")),
-        ("**Environmental performance** (secondary)", f"CO2 from fuel over {km:,} km", f"{co2:+.0f} kg per vehicle per year vs reference"),
-        ("", "Tire wear particles (tracks wear rate)", cell(100 * sel["wear"], 100 * ref["wear"])),
-    ]
-    table = "| Pillar | Indicator | Selected setup |\n|---|---|---|\n" + "\n".join(f"| {a} | {b} | {c} |" for a, b, c in pillars)
-    st.markdown(table)
-    st.caption(f"Screening estimates. Fuel baseline {veh['fuel']} L/100 km, 2.3 kg CO2 per litre of gasoline. "
-               "Price and wear indices are simple scaling rules and should be replaced with fleet purchase and service records.")
+        pillars = [
+            ("**Cost** (primary)", "Tire purchase price index", cell(sel["price"], ref["price"])),
+            ("", "Fuel use from rolling resistance", f"{sel['fuel_delta'] - ref['fuel_delta']:+.1f}% vs reference"),
+            ("**Health and safety** (primary)", "Braking distance", cell(sel["distance"], ref["distance"], " m", ".1f")),
+            ("", "Cornering limit", cell(sel["corner"], ref["corner"], " km/h")),
+            ("", "Hydroplaning onset", cell(sel["v_hp"], ref["v_hp"], " km/h") if sel["v_hp"] else "No water film on this surface"),
+            ("**Operational efficiency** (secondary)", "Tread wear rate index", cell(100 * sel["wear"], 100 * ref["wear"])),
+            ("", "Wheel and tire weight at changeover", cell(sel["assembly_kg"], ref["assembly_kg"], " kg")),
+            ("**Environmental performance** (secondary)", f"CO2 from fuel over {km:,} km", f"{co2:+.0f} kg per vehicle per year vs reference"),
+            ("", "Tire wear particles (tracks wear rate)", cell(100 * sel["wear"], 100 * ref["wear"])),
+        ]
+        table = "| Pillar | Indicator | Selected setup |\n|---|---|---|\n" + "\n".join(f"| {a} | {b} | {c} |" for a, b, c in pillars)
+        st.markdown(table)
+        st.caption(f"Screening estimates. Fuel baseline {veh['fuel']} L/100 km, 2.3 kg CO2 per litre of gasoline. "
+                   "Price and wear indices are simple scaling rules and should be replaced with fleet purchase and service records.")
 
-with tabs[6]:
-    st.markdown(f"""
+if tabs[6].open:
+    with tabs[6]:
+        st.markdown(f"""
 **What this is.** A transparent screening model that shows the direction and rough size of each effect. It is
 calibrated to published independent tire tests, not fitted to any one tire model. Individual tires vary more
 between brands than between sizes, so use it to compare choices, not to predict a specific stopping distance.
