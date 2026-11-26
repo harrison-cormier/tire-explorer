@@ -1,5 +1,8 @@
 """scripts/guard_repo_boundary.py asks the owner before a session changes
-anything outside its own repository, and stays silent for everything else."""
+anything outside its own repository, and stays silent for everything else.
+
+Copyright 2026 Harrison Cormier, Ashley Pacek and Varvara Blinova.
+"""
 import json
 import os
 import subprocess

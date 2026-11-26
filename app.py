@@ -4,6 +4,7 @@ Fleet Tire Optimization Strategy capstone - interactive poster display.
 
 Run with:  streamlit run app.py
 
+Copyright 2026 Harrison Cormier, Ashley Pacek and Varvara Blinova.
 Licensed under the Apache License 2.0 (see LICENSE and NOTICE). Sources are listed in SOURCES.md.
 """
 
@@ -26,6 +27,7 @@ CAR_LENGTH_M = 4.5
 DEMO_SECONDS = 14
 REPO_URL = "https://github.com/harrison-cormier/tire-explorer"
 AUTHORS = "Harrison Cormier, Ashley Pacek and Varvara Blinova"
+COPYRIGHT = f"© 2026 {AUTHORS}"
 FUEL_DOT_STEP = 0.03
 
 COMPOUND_COLOR = {
@@ -508,6 +510,7 @@ def demo_banner(index, conditions):
     """
     Large heading for demo mode: which scenario is playing and the conditions it sets, readable
     from across a room. It stands in for the page title, which demo mode hides to save height.
+    The copyright line sits in its top corner so it is on the first demo screen without adding height.
     """
     chip = (f'display:inline-block;background:{PANEL};border:1px solid {GRID};border-radius:999px;'
             f'padding:6px 16px;margin:0 8px 6px 0;font-size:1.25rem;font-weight:600;color:{INK}')
@@ -515,8 +518,11 @@ def demo_banner(index, conditions):
                     f'background:{SELECTED if i == index else GRID}"></span>' for i in range(len(SCENARIOS)))
     st.html(f"""
 <div style="background:{BANNER};border-left:8px solid {SELECTED};border-radius:12px;padding:14px 24px 8px">
-  <div style="font-size:0.95rem;font-weight:700;letter-spacing:0.08em;color:{SELECTED};margin-bottom:6px">
-    TIRE FITMENT EXPLORER &nbsp;|&nbsp; DEMO {index + 1} OF {len(SCENARIOS)} &nbsp; {steps}</div>
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:6px">
+    <div style="font-size:0.95rem;font-weight:700;letter-spacing:0.08em;color:{SELECTED}">
+      TIRE FITMENT EXPLORER &nbsp;|&nbsp; DEMO {index + 1} OF {len(SCENARIOS)} &nbsp; {steps}</div>
+    <div style="font-size:0.8rem;color:{INK_2};white-space:nowrap">{COPYRIGHT} &nbsp;·&nbsp; University of Waterloo</div>
+  </div>
   <div style="font-size:2rem;font-weight:700;line-height:1.2;color:{INK};margin-bottom:10px">{SCENARIOS[index]["title"]}</div>
   <div>{"".join(f'<span style="{chip}">{c}</span>' for c in conditions)}</div>
 </div>""")
@@ -546,7 +552,7 @@ def verdict(delta_m, residual, ref_name):
 def footer():
     """Small print under every view: what the numbers are, who made it, and where the sources and licence live."""
     st.caption(f"Screening model tuned to published tire tests, for comparing choices. Not a measurement of any "
-               f"specific tire and not safety advice. © 2026 {AUTHORS}. Work conducted at the University of "
+               f"specific tire and not safety advice. {COPYRIGHT}. Work conducted at the University of "
                f"Waterloo. [Sources]({REPO_URL}/blob/main/SOURCES.md) · [Code and licence (Apache 2.0)]({REPO_URL})")
 
 
@@ -701,6 +707,7 @@ with st.sidebar:
     st.toggle("Demo mode (cycle through scenarios)", key="demo", on_change=start_demo,
               help="Steps through preset scenarios. Each step resets the conditions and tire setup, "
                    "so turn it off to explore on your own.")
+    st.caption(f"{COPYRIGHT}. University of Waterloo.")
 
 ss = st.session_state
 env = dict(vehicle=ss.vehicle, surface=SURFACE_KEY[ss.surface], temp=ss.temp, speed=ss.speed)
@@ -1004,7 +1011,7 @@ Waterloo as part of the Fleet Tire Optimization Strategy capstone project.
 
 **Use and licence.** This is a student project and it is not safety advice: do not use it to choose tires for a
 specific vehicle. The tire makers, test organisations and publications named here are credited as sources only and
-did not review or endorse this work. © 2026 {AUTHORS}. The code is open source under the Apache License 2.0 at
+did not review or endorse this work. {COPYRIGHT}. The code is open source under the Apache License 2.0 at
 [{REPO_URL.split("//")[1]}]({REPO_URL}).
 """)
 footer()

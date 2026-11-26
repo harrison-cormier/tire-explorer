@@ -25,6 +25,8 @@ Reading anything, anywhere, is never stopped.
 
 This is a guard against mistakes, not a sandbox: a determined shell command can
 get around it. The rule it backs is in CLAUDE.md.
+
+Copyright 2026 Harrison Cormier, Ashley Pacek and Varvara Blinova.
 """
 import json
 import os

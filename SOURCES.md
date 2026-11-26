@@ -70,3 +70,7 @@ Earlier versions of the model notes named these. They are no longer cited anywhe
 - A figure of 0.04 m between 225 and 255 mm tires in snow braking. It was found only on a third-party summary site.
 - A Tyre Reviews article with Continental on winter tire wear. The article exists, but its figures could not be read; the ADAC worn-tire test supports the same effect.
 - A claim that winter tires stop in half the distance of summer tires on ice. Only the comparison with all-season tires was found.
+
+---
+
+Copyright 2026 Harrison Cormier, Ashley Pacek and Varvara Blinova. Licensed under the Apache License 2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE).
